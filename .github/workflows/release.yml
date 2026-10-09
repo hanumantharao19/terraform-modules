@@ -15,8 +15,6 @@ jobs:
 release:
 name: Validate and Release Modules
 runs-on: ubuntu-latest
-
-```
 steps:
   - name: Checkout repository
     uses: actions/checkout@v4
@@ -78,4 +76,3 @@ steps:
       gh release create "$VERSION" \
         --title "Terraform Modules $VERSION" \
         --notes "Validated release of reusable Terraform modules."
-```
