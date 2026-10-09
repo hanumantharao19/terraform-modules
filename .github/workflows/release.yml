@@ -1,11 +1,15 @@
-name: Workflow Syntax Test
+name: Terraform Module Release
 
-on:
+"on":
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, for example v1.0.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Confirm workflow works
-        run: echo "GitHub Actions workflow is valid"
+  release:
