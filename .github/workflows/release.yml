@@ -1,69 +1,79 @@
-
 name: Terraform Module Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "Release version, for example v1.0.0"
-        required: true
-        type: string
+workflow_dispatch:
+inputs:
+version:
+description: "Release version, for example v1.0.0"
+required: true
+type: string
 
 permissions:
-  contents: write
+contents: write
 
 jobs:
-  release:
-    name: Validate and Release Modules
-    runs-on: ubuntu-latest
+release:
+name: Validate and Release Modules
+runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+```
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
+    with:
+      fetch-depth: 0
 
-      - name: Validate version
-        env:
-          VERSION: ${{ inputs.version }}
-        run: |
-          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Use a version such as v1.0.0"
-            exit 1
-          fi
+  - name: Install Terraform
+    uses: hashicorp/setup-terraform@v3
+    with:
+      terraform_version: "1.12.2"
 
-          if git rev-parse "$VERSION" >/dev/null 2>&1; then
-            echo "This tag already exists."
-            exit 1
-          fi
+  - name: Verify Terraform installation
+    run: terraform version
 
-      - name: Check Terraform formatting
-        run: terraform fmt -check -recursive
+  - name: Validate version
+    env:
+      VERSION: ${{ inputs.version }}
+    run: |
+      if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "Use a version such as v1.0.0"
+        exit 1
+      fi
 
-      - name: Validate Terraform modules
-        run: |
-          for module in vpc rds eks iam/iam-eks; do
-            echo "Validating $module"
-            terraform -chdir="$module" init -backend=false
-            terraform -chdir="$module" validate
-          done
+      if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null 2>&1; then
+        echo "This tag already exists."
+        exit 1
+      fi
 
-      - name: Create and push tag
-        env:
-          VERSION: ${{ inputs.version }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email \
-            "41898282+github-actions[bot]@users.noreply.github.com"
+  - name: Check Terraform formatting
+    run: terraform fmt -check -recursive
 
-          git tag -a "$VERSION" -m "Release $VERSION"
-          git push origin "$VERSION"
+  - name: Validate Terraform modules
+    run: |
+      for module in vpc rds eks iam/iam-eks; do
+        echo "Validating $module"
 
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ inputs.version }}
-        run: |
-          gh release create "$VERSION" \
-            --title "Terraform Modules $VERSION" \
-            --notes "Validated release of reusable Terraform modules."
+        terraform -chdir="$module" init -backend=false
+        terraform -chdir="$module" validate
+      done
+
+  - name: Create and push tag
+    env:
+      VERSION: ${{ inputs.version }}
+    run: |
+      git config user.name "github-actions[bot]"
+      git config user.email \
+        "41898282+github-actions[bot]@users.noreply.github.com"
+
+      git tag -a "$VERSION" -m "Release $VERSION"
+      git push origin "$VERSION"
+
+  - name: Create GitHub Release
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ inputs.version }}
+    run: |
+      gh release create "$VERSION" \
+        --title "Terraform Modules $VERSION" \
+        --notes "Validated release of reusable Terraform modules."
+```
