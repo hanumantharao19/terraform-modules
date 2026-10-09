@@ -1,15 +1,12 @@
-name: Terraform Module Release
+name: First GitHub Actions Test
 
 "on":
   workflow_dispatch:
-    inputs:
-      version:
-        description: "Release version, for example v1.0.0"
-        required: true
-        type: string
-
-permissions:
-  contents: write
 
 jobs:
-  release:
+  hello:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print a message
+        run: echo "Hello! My first GitHub Actions workflow is working."
