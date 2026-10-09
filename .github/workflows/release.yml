@@ -34,6 +34,7 @@ steps:
   - name: Validate version
     env:
       VERSION: ${{ inputs.version }}
+    shell: bash
     run: |
       if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         echo "Use a version such as v1.0.0"
@@ -49,10 +50,12 @@ steps:
     run: terraform fmt -check -recursive
 
   - name: Validate Terraform modules
+    shell: bash
     run: |
+      set -e
+
       for module in vpc rds eks iam/iam-eks; do
         echo "Validating $module"
-
         terraform -chdir="$module" init -backend=false
         terraform -chdir="$module" validate
       done
@@ -62,8 +65,7 @@ steps:
       VERSION: ${{ inputs.version }}
     run: |
       git config user.name "github-actions[bot]"
-      git config user.email \
-        "41898282+github-actions[bot]@users.noreply.github.com"
+      git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       git tag -a "$VERSION" -m "Release $VERSION"
       git push origin "$VERSION"
