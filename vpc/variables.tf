@@ -25,6 +25,7 @@ variable "private_subnets" {
     az       = string
     nat_key = optional(string)
   }))
+  default = {}
 }
 
 variable "enable_nat_gateway" {
